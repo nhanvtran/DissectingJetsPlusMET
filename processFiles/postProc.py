@@ -72,6 +72,13 @@ def getSampleXS(name):
 	elif 'QCD' in name and '5900_6900' in name: xs = 8.47e-4;
 	elif 'QCD' in name and '6900_100000' in name: xs = 8.46e-5;
 
+	elif 'znunu' in name and '0_400' in name: xs = 136.6;
+	elif 'znunu' in name and '400_900' in name: xs = 9.37;
+	elif 'znunu' in name and '900_1600' in name: xs = 0.59;
+	elif 'znunu' in name and '1600_2500' in name: xs = 0.044;
+	elif 'znunu' in name and '2500_3500' in name: xs = 3.53e-3;
+	elif 'znunu' in name and '3500_100000' in name: xs = 3.50e-4;
+
 	elif 'Gj' in name: xs = -999;
 
 	else: 
@@ -120,7 +127,9 @@ def slimSkimAdd(fn,odir,weight):
 	otree.SetName("otree");
 
 	lheWeight = array( 'f', [ 0. ] );  
+	MHTOvHT = array( 'f', [ 0. ] );  
 	b_lheWeight = otree.Branch("lheWeight",lheWeight,"lheWeight/F"); #xs*lumi/nev, take lumi as 1fb-1
+	b_MHTOvHT = otree.Branch("MHTOvHT",MHTOvHT,"MHTOvHT/F"); #xs*lumi/nev, take lumi as 1fb-1
 
 	nent = tree.GetEntriesFast();
 	for i in range(nent):
@@ -130,10 +139,10 @@ def slimSkimAdd(fn,odir,weight):
 		# 	sys.stdout.flush();
 
 		tree.GetEntry(i);
-		lheWeight[0] = float(weight);
-
-		#if tree.HT > 500 and tree.NJets > 2 and tree.MHT > 0:
-		otree.Fill();   
+		if tree.HT > 500 and tree.MHT > 200:
+			lheWeight[0] = float(weight);
+			MHTOvHT[0] = tree.MHT/math.sqrt(tree.HT);
+			otree.Fill();   
 
 	#print "\n"
 	#otree.Print();
@@ -145,7 +154,7 @@ def slimSkimAdd(fn,odir,weight):
 def getFilesRecursively(dir,searchstring,additionalstring = None):
 	
 	cfiles = [];
-	for root, dirs, files in os.walk(DataDir):
+	for root, dirs, files in os.walk(dir):
 		for file in files:	
 			if searchstring in file:
 				if additionalstring == None or additionalstring in file:
@@ -154,7 +163,7 @@ def getFilesRecursively(dir,searchstring,additionalstring = None):
 
 if __name__ == '__main__':
 
-	DataDir = "/uscms_data/d2/ntran/physics/SUSY/theory/JPM/Data";
+	DataDir = "/uscms_data/d2/ntran/physics/SUSY/theory/DissectingJetsPlusMET/Data";
 	OutDir = 'tmp';
 
 	tags = [];
@@ -182,6 +191,12 @@ if __name__ == '__main__':
 	tags.append( ['QCD','4900_5900'] );
 	tags.append( ['QCD','5900_6900'] );
 	tags.append( ['QCD','6900_100000'] );
+	tags.append( ['znunu','0_400'] );
+	tags.append( ['znunu','400_900'] );
+	tags.append( ['znunu','900_1600'] );
+	tags.append( ['znunu','1600_2500'] );
+	tags.append( ['znunu','2500_3500'] );
+	tags.append( ['znunu','3500_100000'] );
 
 	tags.append( ['GjN1_GjN1',       '_500_'] );
 	tags.append( ['GjN1_GjjN1',      '_500_'] );
@@ -241,8 +256,8 @@ if __name__ == '__main__':
 	os.system(cmmd)
 	cmmd = 'hadd -f %s/ProcJPM_QCD.root %s/*QCD*.root' % (OutDir,OutDir)
 	os.system(cmmd)
-
-
+	cmmd = 'hadd -f %s/ProcJPM_znunu.root %s/*znunu*.root' % (OutDir,OutDir)
+	os.system(cmmd)
 
 
 

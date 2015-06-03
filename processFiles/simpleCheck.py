@@ -18,11 +18,13 @@ ROOT.gStyle.SetPaintTextFormat("1.1f");
 
 if __name__ == '__main__':
 
-	f = ROOT.TFile("tmp/ProcJPM_QCD.root");
+	f = ROOT.TFile("samples/ProcJPM_ttbar.root");
 	t = f.Get("otree");
 
 	h_HT = ROOT.TH1F("h_HT",";HT (GeV);Events",100,0,10000);
 	h_MHT = ROOT.TH1F("h_MHT",";MHT (GeV);Events",100,0,1000);
+	h_sumJetMass = ROOT.TH1F("h_sumJetMass",";sumJetMass (GeV);Events",100,0,3000);
+	h_MT2 = ROOT.TH1F("h_MT2",";MT2 (GeV);Events",100,0,5000);
 
 	nent = t.GetEntriesFast();
 	for i in range(t.GetEntriesFast()):
@@ -33,6 +35,9 @@ if __name__ == '__main__':
 		t.GetEntry(i);
 		h_HT.Fill(t.HT,t.lheWeight);
 		h_MHT.Fill(t.MHT,t.lheWeight);
+		h_sumJetMass.Fill(t.sumJetMass,t.lheWeight);
+		h_MT2.Fill(t.mT2,t.lheWeight);
+
 	print '\n'
 
 	c_HT = ROOT.TCanvas("c_HT","c_HT",1000,800);
@@ -44,3 +49,14 @@ if __name__ == '__main__':
 	h_MHT.Draw();
 	ROOT.gPad.SetLogy();
 	c_MHT.SaveAs("plots/MHT.pdf");
+
+	c_sumJetMass = ROOT.TCanvas("c_sumJetMass","c_sumJetMass",1000,800);
+	h_sumJetMass.Draw();
+	ROOT.gPad.SetLogy();
+	c_sumJetMass.SaveAs("plots/sumJetMass.pdf");
+
+	c_MT2 = ROOT.TCanvas("c_MT2","c_MT2",1000,800);
+	h_MT2.Draw();
+	ROOT.gPad.SetLogy();
+	c_MT2.SaveAs("plots/MT2.pdf");
+

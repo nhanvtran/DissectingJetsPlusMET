@@ -42,7 +42,8 @@ class observableContainer:
 		self._cutstring += ")";
 		print "cutstring = ", self._cutstring;
 
-		self._spectatorVariables = ["lheWeight"];
+		# self._spectatorVariables = ["lheWeight"];
+		self._spectatorVariables = [];
 		self._trees = [self._t_sig,self._t_bkg];
 		self._bdt = TMVAhelper("MVA_"+label,self._discVariables,self._trees,self._spectatorVariables,weightloc);
 		print ";;weightloc = ",weightloc

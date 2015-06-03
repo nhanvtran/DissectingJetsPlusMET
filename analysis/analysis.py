@@ -73,11 +73,11 @@ if __name__ == '__main__':
 	cuts = [];
 	cuts.append( ["HT",500,99999] );
 	cuts.append( ["MHT",200,99999] );
-	cuts.append( ["NJets",2,99] );
+	cuts.append( ["NJets",1,99] );
 
-	allVariables = ["HT","NJets","MHT"];
-	varlo        = [   0,      0,    0];
-	varhi        = [6000,     20, 1000];
+	allVariables = ["HT","NJets","MHT","sumJetMass","mT2","mRazor","dRazor"];
+	varlo        = [   0,      0,    0,           0,    0,       0,       0];
+	varhi        = [6000,     20, 1000,        3000, 3000,   10000,       3];
 	h_variables = [];
 	for i in range(len(allVariables)): 
 		h_variables.append( [ROOT.TH1F("hs_"+allVariables[i],"au; "+allVariables[i]+";",20,varlo[i],varhi[i]), ROOT.TH1F("hb_"+allVariables[i],"au; "+allVariables[i]+";",20,varlo[i],varhi[i]) ] );
@@ -94,6 +94,7 @@ if __name__ == '__main__':
 
 	observableSets = [];
 	h_bdts = [];
+	tagbase = "%s_%s" % (sigName,bkgName);
 	labelbase = "bdtg_%s_%s" % (sigName,bkgName);
 	curodir = odir + "/" + "plots_" + labelbase;
 	if options.makeROCs: 
@@ -106,11 +107,13 @@ if __name__ == '__main__':
 		curweightloc = weightloc+"/" + "weights_" + labelbase;
 		if options.doTraining: 
 			if not os.path.exists(curweightloc): os.makedirs(curweightloc);
+			# currentFilesInDir = os.listdir(curweightloc);
+			# if label in currentFilesInDir: continue;
 
 		observableSets.append( observableContainer(sigFN,bkgFN,variables[i],cuts,label,curweightloc) );
 		if options.doTraining: observableSets[i].doTraining();
 		observableSets[i].readMVA("BDTG");
-		h_bdts.append( [ROOT.TH1F("hsbdt_"+label,"au; "+label+";",1000,-1,1), ROOT.TH1F("hbbdt_"+label,"au; "+label+";",1000,-1,1) ] );
+		h_bdts.append( [ROOT.TH1F("hsbdt_"+label,"au; "+label+";",10000,-1,1), ROOT.TH1F("hbbdt_"+label,"au; "+label+";",10000,-1,1) ] );
 
 	##### ##### ##### ##### ##### 
 	# FILL TREES
@@ -122,7 +125,7 @@ if __name__ == '__main__':
 			nent = trees[it].GetEntriesFast()
 			for i in range(nent):
 				
-				# if i > 100000: break;
+				# if i > 10000: break;
 
 				if(i % (1 * nent/100) == 0):
 					sys.stdout.write("\r[" + "="*int(20*i/nent) + " " + str(round(100.*i/nent,0)) + "% done");
@@ -152,30 +155,43 @@ if __name__ == '__main__':
 
 	##### ##### ##### ##### ##### 
 	# PLOT
-
-		for ivar in range(len(allVariables)): makeCanvas(h_variables[ivar],names,allVariables[ivar],curodir,True);
+		print "make raw variable plots..."
+		for ivar in range(len(allVariables)): 
+			makeCanvas(h_variables[ivar],names,allVariables[ivar]+'_'+tagbase,curodir,True);
+		print "make bdt distribution plots..."			
 		for ibdt in range(len(variables)): 
 			label = "bdt_";
 			for vnames in variables[ibdt]: label += vnames + "_";
-			makeCanvas(h_bdts[ibdt],names,label,curodir,True);
+			print label;
+			makeCanvas(h_bdts[ibdt],names,label+'_'+tagbase,curodir,True);
 
 	##### ##### ##### ##### ##### 
 	# make ROCs		
+		print "make rocs..."			
 		rocs = [];
 		leg = ROOT.TLegend( 0.2, 0.6, 0.5, 0.9 );
 		leg.SetBorderSize( 0 );
 		leg.SetFillStyle( 0 );
-		leg.SetTextSize( 0.03 );        
+		leg.SetTextSize( 0.03 );     
+
+		labels2 = [];   
 		for ibdt in range(len(variables)):
 			rocs.append( makeROCFromHisto(h_bdts[ibdt]) );
 			rocs[ibdt].SetLineColor(ibdt+1);
 			rocs[ibdt].SetLineWidth(2)
 			label = "";
+			label2 = "";
 			for ivar in range(len(variables[ibdt])): 
 				label += str(variables[ibdt][ivar]);
-				if ivar < len(variables[ibdt])-1: label += "+";
+				label2 += str(variables[ibdt][ivar]);
+				if ivar < len(variables[ibdt])-1: 
+					label += "+";
+					label2 += "_"
 
 			leg.AddEntry( rocs[ibdt], label, "l" );
+			labels2.append(label2);
+
+		bkgrej = [];
 
 		canroc = ROOT.TCanvas("canroc","canroc",1200,1000);
 		hrl1 = canroc.DrawFrame(1e-1,1e-4,1.0,1.0);
@@ -183,18 +199,36 @@ if __name__ == '__main__':
 		# hrl1.GetYaxis().SetTitle("#varepsilon_{bkg} ("+bkgname+")");
 		hrl1.GetXaxis().SetTitle("signal efficiency");
 		hrl1.GetYaxis().SetTitle("background efficiency");
-		for i in range(len(rocs)): rocs[i].Draw("l");
+		for i in range(len(rocs)): 
+			rocs[i].Draw("l");
+			tmpbkgrej = [];
+			tmpbkgrej.append( labels2[i] );
+			if rocs[i].Eval(0.2) > 0: tmpbkgrej.append( 1./rocs[i].Eval(0.2) );
+			else: tmpbkgrej.append( -1 );
+			if rocs[i].Eval(0.5) > 0: tmpbkgrej.append( 1./rocs[i].Eval(0.5) );
+			else: tmpbkgrej.append( -1 );
+			
+			bkgrej.append( tmpbkgrej );
 
 		leg.Draw();
-		canroc.SaveAs(curodir+"/Rocs.root");
-		canroc.SaveAs(curodir+"/Rocs.eps");
-		canroc.SaveAs(curodir+"/Rocs.png");
+		canroc.SaveAs(curodir+"/Rocs"+'_'+tagbase+".root");
+		canroc.SaveAs(curodir+"/Rocs"+'_'+tagbase+".eps");
+		canroc.SaveAs(curodir+"/Rocs"+'_'+tagbase+".png");
+		canroc.SaveAs(curodir+"/Rocs"+'_'+tagbase+".pdf");
 		ROOT.gPad.SetLogy();
 		ROOT.gPad.SetLogx();
-		canroc.SaveAs(curodir+"/Rocs_log.root");
-		canroc.SaveAs(curodir+"/Rocs_log.eps");
-		canroc.SaveAs(curodir+"/Rocs_log.png");
+		canroc.SaveAs(curodir+"/Rocs_log"+'_'+tagbase+".root");
+		canroc.SaveAs(curodir+"/Rocs_log"+'_'+tagbase+".eps");
+		canroc.SaveAs(curodir+"/Rocs_log"+'_'+tagbase+".png");
+		canroc.SaveAs(curodir+"/Rocs_log"+'_'+tagbase+".pdf");
 
+		fout = open(curodir+"/RocSummary_"+tagbase+".txt",'w');
+		for line in bkgrej:
+			ostring = '';
+			for a in range(len(line)): ostring += str(line[a]) + ' ';
+			ostring += '\n';
+			fout.write(ostring)
+		fout.close();
 
 
 
