@@ -18,7 +18,7 @@ ROOT.gStyle.SetPaintTextFormat("1.1f");
 
 if __name__ == '__main__':
 
-	f = ROOT.TFile("samples/ProcJPM_ttbar.root");
+	f = ROOT.TFile("samples-split/ProcJPM_Wjets-train.root");
 	t = f.Get("otree");
 
 	h_HT = ROOT.TH1F("h_HT",";HT (GeV);Events",100,0,10000);

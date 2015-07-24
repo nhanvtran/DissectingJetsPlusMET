@@ -38,6 +38,8 @@ parser.add_option('--bkgTag',action="store",type="string",dest="bkgTag",default=
 parser.add_option('--weightDir',action="store",type="string",dest="weightDir",default="/eos/uscms/store/user/ntran/SUSY/theory_JPM/training/weights")
 parser.add_option('--plotDir',action="store",type="string",dest="plotDir",default="/eos/uscms/store/user/ntran/SUSY/theory_JPM/training/plots")
 
+parser.add_option('--trainingSample', action='store_true', dest='trainingSample', default=False, help='training or not')
+
 (options, args) = parser.parse_args()
 
 ############################################################
@@ -51,19 +53,22 @@ parser.add_option('--plotDir',action="store",type="string",dest="plotDir",defaul
 
 if __name__ == '__main__':
 
+	postfix = 'test';
+	if options.trainingSample: postfix = 'train'
+
 	weightloc = options.weightDir;
 	odir = options.plotDir;
 
 	sampleDir = options.sampleDir;
 	sigName = options.sigTag;
 	bkgName = options.bkgTag;
-	sigFN = sampleDir+"/"+"ProcJPM_"+sigName+".root"
-	bkgFN = sampleDir+"/"+"ProcJPM_"+bkgName+".root"
+	sigFN = sampleDir+"/"+"ProcJPM_"+sigName+"-"+postfix+".root"
+	bkgFN = sampleDir+"/"+"ProcJPM_"+bkgName+"-"+postfix+".root"
 
 	variables = [];
 	for ivars in options.inputs.split(';'): 
 		variables.append( ivars.split(',') );
-	print variables
+	print sigFN, bkgFN, variables
 	
 	f_sig = ROOT.TFile(sigFN);
 	f_bkg = ROOT.TFile(bkgFN);    
@@ -75,9 +80,9 @@ if __name__ == '__main__':
 	cuts.append( ["MHT",200,99999] );
 	cuts.append( ["NJets",1,99] );
 
-	allVariables = ["HT","NJets","MHT","sumJetMass","mT2","mRazor","dRazor"];
-	varlo        = [   0,      0,    0,           0,    0,       0,       0];
-	varhi        = [6000,     20, 1000,        3000, 3000,   10000,       3];
+	allVariables = ["HT","NJets","MHT","sumJetMass","mT2","mRazor","dRazor","mEff","MHTOvHT"];
+	varlo        = [   0,      0,    0,           0,    0,       0,       0,     0,        0];
+	varhi        = [6000,     20, 1000,        3000, 3000,   10000,       3,  5000,       25];
 	h_variables = [];
 	for i in range(len(allVariables)): 
 		h_variables.append( [ROOT.TH1F("hs_"+allVariables[i],"au; "+allVariables[i]+";",20,varlo[i],varhi[i]), ROOT.TH1F("hb_"+allVariables[i],"au; "+allVariables[i]+";",20,varlo[i],varhi[i]) ] );
@@ -113,7 +118,7 @@ if __name__ == '__main__':
 		observableSets.append( observableContainer(sigFN,bkgFN,variables[i],cuts,label,curweightloc) );
 		if options.doTraining: observableSets[i].doTraining();
 		observableSets[i].readMVA("BDTG");
-		h_bdts.append( [ROOT.TH1F("hsbdt_"+label,"au; "+label+";",10000,-1,1), ROOT.TH1F("hbbdt_"+label,"au; "+label+";",10000,-1,1) ] );
+		h_bdts.append( [ROOT.TH1F("hsbdt_"+label,"au; "+label+";",100000,-1,1), ROOT.TH1F("hbbdt_"+label,"au; "+label+";",100000,-1,1) ] );
 
 	##### ##### ##### ##### ##### 
 	# FILL TREES
@@ -125,7 +130,7 @@ if __name__ == '__main__':
 			nent = trees[it].GetEntriesFast()
 			for i in range(nent):
 				
-				# if i > 10000: break;
+				# if i > 1000: break;
 
 				if(i % (1 * nent/100) == 0):
 					sys.stdout.write("\r[" + "="*int(20*i/nent) + " " + str(round(100.*i/nent,0)) + "% done");
@@ -163,7 +168,7 @@ if __name__ == '__main__':
 			label = "bdt_";
 			for vnames in variables[ibdt]: label += vnames + "_";
 			print label;
-			makeCanvas(h_bdts[ibdt],names,label+'_'+tagbase,curodir,True);
+			makeCanvas(h_bdts[ibdt],names,label+'_'+tagbase,curodir,True,True);
 
 	##### ##### ##### ##### ##### 
 	# make ROCs		
@@ -176,6 +181,7 @@ if __name__ == '__main__':
 
 		labels2 = [];   
 		for ibdt in range(len(variables)):
+			print "roc #",ibdt;
 			rocs.append( makeROCFromHisto(h_bdts[ibdt]) );
 			rocs[ibdt].SetLineColor(ibdt+1);
 			rocs[ibdt].SetLineWidth(2)
@@ -194,7 +200,7 @@ if __name__ == '__main__':
 		bkgrej = [];
 
 		canroc = ROOT.TCanvas("canroc","canroc",1200,1000);
-		hrl1 = canroc.DrawFrame(1e-1,1e-4,1.0,1.0);
+		hrl1 = canroc.DrawFrame(5e-2,1e-6,1.0,1.0);
 		# hrl1.GetXaxis().SetTitle("#varepsilon_{sig} ("+signame+")");
 		# hrl1.GetYaxis().SetTitle("#varepsilon_{bkg} ("+bkgname+")");
 		hrl1.GetXaxis().SetTitle("signal efficiency");
@@ -203,9 +209,9 @@ if __name__ == '__main__':
 			rocs[i].Draw("l");
 			tmpbkgrej = [];
 			tmpbkgrej.append( labels2[i] );
-			if rocs[i].Eval(0.2) > 0: tmpbkgrej.append( 1./rocs[i].Eval(0.2) );
+			if rocs[i].Eval(0.1) > 0: tmpbkgrej.append( 1./rocs[i].Eval(0.1) );
 			else: tmpbkgrej.append( -1 );
-			if rocs[i].Eval(0.5) > 0: tmpbkgrej.append( 1./rocs[i].Eval(0.5) );
+			if rocs[i].Eval(0.25) > 0: tmpbkgrej.append( 1./rocs[i].Eval(0.25) );
 			else: tmpbkgrej.append( -1 );
 			
 			bkgrej.append( tmpbkgrej );

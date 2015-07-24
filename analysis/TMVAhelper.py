@@ -84,14 +84,22 @@ class TMVAhelper:
 		#method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"BDTG","!H:!V:NTrees=100:MinNodeSize=0.025:BoostType=Grad:Shrinkage=0.10:UseBaggedBoost:BaggedSampleFraction=0.5:nCuts=20:MaxDepth=4");
 		
 		#from cv
-		#method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"BDTG","!H:!V:NTrees=100:BoostType=Grad:Shrinkage=0.10:UseBaggedGrad=F:nCuts=50:MaxDepth=3:SeparationType=GiniIndex");
+		# method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"BDTG","!H:!V:NTrees=100:BoostType=Grad:Shrinkage=0.10:UseBaggedGrad=F:nCuts=50:MaxDepth=3:SeparationType=GiniIndex");
 		# method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"BDTG","!H:!V:NTrees=30:BoostType=Grad:Shrinkage=0.10:UseBaggedGrad=F:nCuts=50:MaxDepth=3:SeparationType=GiniIndex");
 		#from phil
-		method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"BDTG","!H:!V:NTrees=500:BoostType=Grad:Shrinkage=0.10:UseBaggedGrad=F:nCuts=2500:MaxDepth=3:SeparationType=GiniIndex");
-
-
+		#method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"BDTG","!H:!V:NTrees=500:BoostType=Grad:Shrinkage=0.10:UseBaggedGrad=F:nCuts=2500:MaxDepth=3:SeparationType=GiniIndex");
 		##method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"Cuts","!H:!V:FitMethod=MC:EffSel:SampleSize=200000:VarProp=FSmart");
 		#method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"Cuts","!H:!V");#:EffSel:SampleSize=200000:VarProp=FSmart");
+
+		# "standard BDT"
+		#method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"BDTG","!H:!V:NTrees=500:BoostType=Grad:Shrinkage=0.10:UseBaggedGrad=F:nCuts=20000:MaxDepth=3:SeparationType=GiniIndex");
+		# "low BKG bdt"
+		method = self._factory.BookMethod(ROOT.TMVA.Types.kBDT,"BDTG","!H:!V:NTrees=50:MinNodeSize=0.2%:BoostType=Grad:Shrinkage=0.10:nCuts=1000000:NNodesMax=1000000:MaxDepth=10");
+		# [6/23/15, 4:17:41 PM] violatingcp: very deep trees
+		# [6/23/15, 4:17:53 PM] violatingcp: cuts to very low bkg
+		# [6/23/15, 4:17:59 PM] violatingcp: with minNodeSize
+		# [6/23/15, 4:18:09 PM] violatingcp: you can lower the shrinkage
+		# [6/23/15, 4:18:12 PM] violatingcp: to make it more robust
 
 		self._factory.TrainAllMethods()
 		self._factory.TestAllMethods()

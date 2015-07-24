@@ -23,13 +23,7 @@ from optparse import OptionParser
 
 parser = OptionParser()
 parser.add_option('-b', action='store_true', dest='noX', default=False, help='no X11 windows')
-
-parser.add_option('--sigFN',action="store",type="float",dest="mhtHi",default=9999)
-parser.add_option('--bigFN',action="store",type="float",dest="njLo",default=3)
-parser.add_option('--njHi',action="store",type="float",dest="njHi",default=99)
-
-parser.add_option('--signame',action="store",type="string",dest="signame",default="T1tttt1500-100")
-parser.add_option('--bkgname',action="store",type="string",dest="bkgname",default="QCD")
+parser.add_option('--train', action='store_true', dest='train', default=False, help='no X11 windows')
 
 (options, args) = parser.parse_args()
 
@@ -107,7 +101,10 @@ def getLHEWeight(files):
 	if theXS == -999: return 1;
 	else: return (theXS/totalEvents)
 
-def slimSkimAdd(fn,odir,weight):
+def slimSkimAdd(fn,odir,weight,trainingSample):
+
+	modval = 0;
+	if trainingSample: modval = 1;
 
 	basename = os.path.basename( fn );
 
@@ -139,7 +136,9 @@ def slimSkimAdd(fn,odir,weight):
 		# 	sys.stdout.flush();
 
 		tree.GetEntry(i);
-		if tree.HT > 500 and tree.MHT > 200:
+		if tree.HT > 0 and tree.MHT > 0:
+			if int(tree.HT) % 2 == modval: continue;
+			# print int(tree.HT)
 			lheWeight[0] = float(weight);
 			MHTOvHT[0] = tree.MHT/math.sqrt(tree.HT);
 			otree.Fill();   
@@ -219,27 +218,30 @@ if __name__ == '__main__':
 	tags.append( ['GjjjN1_GjjjN1',  '_1500_'] );
 	tags.append( ['GjjjN1_GjjjjN1', '_1500_'] );
 	tags.append( ['GjjjjN1_GjjjjN1','_1500_'] );
-	tags.append( ['GjN1_GjN1',      '_2000_'] );
-	tags.append( ['GjN1_GjjN1',     '_2000_'] );
-	tags.append( ['GjjN1_GjjN1',    '_2000_'] );
-	tags.append( ['GjjN1_GjjjN1',   '_2000_'] );
-	tags.append( ['GjjjN1_GjjjN1',  '_2000_'] );
-	tags.append( ['GjjjN1_GjjjjN1', '_2000_'] );
-	tags.append( ['GjjjjN1_GjjjjN1','_2000_'] );
+	# tags.append( ['GjN1_GjN1',      '_2000_'] );
+	# tags.append( ['GjN1_GjjN1',     '_2000_'] );
+	# tags.append( ['GjjN1_GjjN1',    '_2000_'] );
+	# tags.append( ['GjjN1_GjjjN1',   '_2000_'] );
+	# tags.append( ['GjjjN1_GjjjN1',  '_2000_'] );
+	# tags.append( ['GjjjN1_GjjjjN1', '_2000_'] );
+	# tags.append( ['GjjjjN1_GjjjjN1','_2000_'] );
 
 
 	# make a tmp dir
 	#####
-
+	postfix = 'test';
+	if options.train: postfix = 'train'
+	print "postfix = ", postfix
 	for i in range(len(tags)):
 		
 		filesToConvert = getFilesRecursively(DataDir,tags[i][0],tags[i][1]);
 		#print filesToConvert
 		curweight = getLHEWeight( filesToConvert );
 		for f in filesToConvert:
-			slimSkimAdd(f,OutDir,curweight);
+			slimSkimAdd(f,OutDir,curweight,options.train);
 		## hadd stuff
-		oname = OutDir + '/ProcJPM_'+tags[i][0]+"_"+tags[i][1]+".root";
+		oname = OutDir + '/ProcJPM_'+tags[i][0]+"_"+tags[i][1]+"-"+postfix+".root";
+		# oname = OutDir + '/ProcJPM_'+tags[i][0]+"_"+tags[i][1]+".root";
 		haddCmmd = 'hadd -f '+oname+" ";
 		for f in filesToConvert:
 			ofile = OutDir + "/" + os.path.basename( f );
@@ -250,15 +252,23 @@ if __name__ == '__main__':
 	for files in os.listdir(OutDir):
 		if 'slim' in files: os.system('rm '+OutDir+'/'+files)
 
-	cmmd = 'hadd -f %s/ProcJPM_ttbar.root %s/*ttbar*.root' % (OutDir,OutDir)
+	cmmd = 'hadd -f %s/ProcJPM_ttbar-%s.root %s/*ttbar*-%s.root' % (OutDir,postfix,OutDir,postfix)
 	os.system(cmmd)
-	cmmd = 'hadd -f %s/ProcJPM_Wjets.root %s/*Wjets*.root' % (OutDir,OutDir)
+	cmmd = 'hadd -f %s/ProcJPM_Wjets-%s.root %s/*Wjets*-%s.root' % (OutDir,postfix,OutDir,postfix)
 	os.system(cmmd)
-	cmmd = 'hadd -f %s/ProcJPM_QCD.root %s/*QCD*.root' % (OutDir,OutDir)
+	cmmd = 'hadd -f %s/ProcJPM_QCD-%s.root %s/*QCD*-%s.root' % (OutDir,postfix,OutDir,postfix)
 	os.system(cmmd)
-	cmmd = 'hadd -f %s/ProcJPM_znunu.root %s/*znunu*.root' % (OutDir,OutDir)
+	cmmd = 'hadd -f %s/ProcJPM_znunu-%s.root %s/*znunu*-%s.root' % (OutDir,postfix,OutDir,postfix)
 	os.system(cmmd)
 
+	# cmmd = 'hadd -f %s/ProcJPM_ttbar.root %s/*ttbar*.root' % (OutDir,OutDir)
+	# os.system(cmmd)
+	# cmmd = 'hadd -f %s/ProcJPM_Wjets.root %s/*Wjets*.root' % (OutDir,OutDir)
+	# os.system(cmmd)
+	# cmmd = 'hadd -f %s/ProcJPM_QCD.root %s/*QCD*.root' % (OutDir,OutDir)
+	# os.system(cmmd)
+	# cmmd = 'hadd -f %s/ProcJPM_znunu.root %s/*znunu*.root' % (OutDir,OutDir)
+	# os.system(cmmd)
 
 
 

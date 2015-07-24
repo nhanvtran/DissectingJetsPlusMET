@@ -24,7 +24,7 @@ parser.add_option('-i','--interactive', action='store_true', dest='interactive',
 
 
 
-sampleDir = '/uscms_data/d2/ntran/physics/SUSY/theory/DissectingJetsPlusMET/processFiles/samples/';
+sampleDir = '/uscms_data/d2/ntran/physics/SUSY/theory/DissectingJetsPlusMET/processFiles/samples-split/';
 # weightDir = '/eos/uscms/store/user/ntran/SUSY/theory_JPM/training/weights';
 # plotDir   = '/eos/uscms/store/user/ntran/SUSY/theory_JPM/training/plots';	
 weightDir = './weights';
@@ -82,7 +82,7 @@ def condorize(command,tag):
 		if options.makeROCs: 
 			f1.write("tar -cvzf %s_%s.tar.gz plots \n" % (prefix,tag))
 			f1.write("xrdcp -f %s_%s.tar.gz root://cmseos.fnal.gov//store/user/ntran/SUSY/theory_JPM/training/%s_%s.tar.gz \n" % (prefix,tag,prefix,tag));
-		f1.write("rm *.py *.pyc *.tar.gz *.C \n");
+		f1.write("rm *.py *.pyc *.tar.gz *.C *.root \n");
 		f1.close()
 
 		f2n = "tmp_%s.condor" % (tag);
@@ -115,7 +115,7 @@ if __name__ == '__main__':
 	signals = [];
 	#masses = ['500','1000','1500','2000'];
 	masses = ['500','1000','1500'];
-	# masses = ['1000','1500'];
+	# masses = ['500','1500'];
 	for i in range(1,5): 
 		tag1,tag2 = "G","G";
 		for ai in range(1,i+1): tag1+="j";
@@ -124,18 +124,25 @@ if __name__ == '__main__':
 			signals.append( tag1+"N1_"+tag2+"N1__"+m+"_" );
 			if i < 4: signals.append( tag1+"N1_"+tag2+"jN1__"+m+"_" );
 
-	# signals = ['GjjjjN1_GjjjjN1__500_'];
-	# backgrounds = ['ttbar']
-	# backgrounds = ['Wjets']
-	backgrounds = ['Wjets','QCD','znunu'];
+	# signals = ['GjjjjN1_GjjjjN1__1000_'];
+	# backgrounds = ['ttbar','znunu','allBkg'];
 
+	# vs. 
+	# backgrounds = ['allBkg'];	
+	# backgrounds = ['allBkg'];
+	#backgrounds = ['ttbar','allBkg'];
+	backgrounds = ['znunu','ttbar','Wjets']
+	# backgrounds = ['QCD']
+	# backgrounds = ['Wjets','QCD','znunu'];
+
+	# observables.append( "mEff" );
 	observables = [];
 	observables.append( "HT" );
 	observables.append( "MHT" );
-	observables.append( "mEff" );
 	observables.append( "NJets" );
 	observables.append( "mT2" );
 	observables.append( "MHTOvHT" );
+	observables.append( "alphaT" );
 	observables.append( "sumJetMass" );
 	observables.append( "HT,NJets" );
 	observables.append( "mRazor,dRazor" );
@@ -144,6 +151,21 @@ if __name__ == '__main__':
 	observables.append( "sumJetMass,MHT" );
 	observables.append( "HT,NJets,MHT" );
 	observables.append( "sumJetMass,NJets,MHT" );
+	observables.append( "sumJetMass,NJets,MHT,mRazor,dRazor,mT2,alphaT" );
+	# vs.
+	observables.append( "sumJetMass,NJets,MHT,mRazor,dRazor" );
+	observables.append( "sumJetMass,NJets,MHT,mT2" );
+	observables.append( "sumJetMass,NJets,MHT,HT" );
+	observables.append( "sumJetMass,NJets,MHT,alphaT" );
+
+
+	# observables.append( "sumJetMass,NJets,MHT" );
+	# observables.append( "sumJetMass,NJets,MHT,mRazor,dRazor,mT2,alphaT" );
+	# observables.append( "sumJetMass,NJets,MHT,mRazor,dRazor" );
+	# observables.append( "sumJetMass,NJets,MHT,mT2" );
+	# observables.append( "sumJetMass,NJets,MHT,HT" );
+	# observables.append( "sumJetMass,NJets,MHT,alphaT" );
+
 
 	###########
 	## training
@@ -160,6 +182,7 @@ if __name__ == '__main__':
 					command += " --bkgTag "     + bkg;
 					command += " --inputs "     + '"'+obs+'"';
 					command += " --doTraining";
+					command += " --trainingSample";
 
 					print command;
 					label = sig + "_" + bkg + "_" + obs;

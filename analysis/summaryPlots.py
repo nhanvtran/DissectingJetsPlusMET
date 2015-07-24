@@ -15,8 +15,8 @@ from utilities import *
 ROOT.gROOT.ProcessLine(".L tdrstyle.C");
 ROOT.setTDRStyle();
 ROOT.gStyle.SetPadTopMargin(0.06);
-ROOT.gStyle.SetPadLeftMargin(0.16);
-ROOT.gStyle.SetPadRightMargin(0.10);
+ROOT.gStyle.SetPadLeftMargin(0.06);
+ROOT.gStyle.SetPadRightMargin(0.06);
 ROOT.gStyle.SetPalette(1);
 ROOT.gStyle.SetPaintTextFormat("1.1f");
 
@@ -59,8 +59,8 @@ def fileVariables(fname):
 
 def findEff(name,fn,effval):
 	index = -1;
-	if effval == 20: index = 1;
-	if effval == 50: index = 2;
+	if effval == 10: index = 1;
+	if effval == 25: index = 2;
 
 	thevalue = 0;
 	curf = open(fn,'r');
@@ -114,8 +114,8 @@ def makeSummary( mass, background, effval):
 	leg.SetFillColor(0);
 	leg.SetBorderSize(0);
 
-	colors = [1,1,2,2,3,3,4,4,5,5,6,6,7,7]
-	style =  [1,2,1,2,1,2,1,2,1,2,1,2,1,2]
+	colors = [1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,12,12]
+	style =  [1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2, 1, 2]
 	histograms[0].SetMaximum(theMax*1.25);
 	histograms[0].SetMinimum(0.);
 	for i in range(len(histograms)):
@@ -151,12 +151,13 @@ if __name__ == '__main__':
 	print "Make summary plots..."
 
 	masses = [500,1000,1500];
-	bkgs   = ['ttbar','QCD','Wjets','znunu'];
+	# bkgs   = ['ttbar','QCD','Wjets','znunu'];
+	bkgs   = ['ttbar','Wjets','znunu'];
 
 	for mass in masses:
 		for bkg in bkgs:
 			print "Make mass = ",str(mass),", bkg = ", bkg;
 			
-			makeSummary( mass, bkg, 20 );
-			makeSummary( mass, bkg, 50 );
+			makeSummary( mass, bkg, 10 );
+			makeSummary( mass, bkg, 25 );
 

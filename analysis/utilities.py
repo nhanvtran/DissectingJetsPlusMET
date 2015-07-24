@@ -9,7 +9,7 @@ import time
 
 import ROOT
 
-def makeCanvas(hists, names, canname, odir, normalize=False):
+def makeCanvas(hists, names, canname, odir, normalize=False,setLogy=False):
 	
 	#bin = options.ptbin;
 	#directory = "figs_bin"+str(bin);
@@ -35,7 +35,7 @@ def makeCanvas(hists, names, canname, odir, normalize=False):
 	for i in range(1,len(hists)):
 		hists[i].Draw("sames");
 	leg.Draw();
-	#ROOT.gPad.SetLogy();
+	if setLogy: ROOT.gPad.SetLogy();
 	can.SaveAs(odir+"/"+canname+".eps");
 	can.SaveAs(odir+"/"+canname+".png");
 	can.SaveAs(odir+"/"+canname+".pdf");
