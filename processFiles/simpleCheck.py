@@ -18,7 +18,9 @@ ROOT.gStyle.SetPaintTextFormat("1.1f");
 
 if __name__ == '__main__':
 
-	f = ROOT.TFile("samples-split/ProcJPM_Wjets-train.root");
+	# f = ROOT.TFile("tmp/ProcJPM_QCD-test.root");
+	#f = ROOT.TFile("../localData/Backgrounds/Backgrounds_13TEV/Znunu/slim_znunu_0_400_18385.root");
+	f = ROOT.TFile("samples-raw/ProcJPM_znunu.root")
 	t = f.Get("otree");
 
 	h_HT = ROOT.TH1F("h_HT",";HT (GeV);Events",100,0,10000);
@@ -28,15 +30,17 @@ if __name__ == '__main__':
 
 	nent = t.GetEntriesFast();
 	for i in range(t.GetEntriesFast()):
-		if(i % (1 * nent/100) == 0):
-			sys.stdout.write("\r[" + "="*int(20*i/nent) + " " + str(round(100.*i/nent,0)) + "% done");
-			sys.stdout.flush();
+
+		# if(i % (1 * nent/100) == 0):
+		# 	sys.stdout.write("\r[" + "="*int(20*i/nent) + " " + str(round(100.*i/nent,0)) + "% done");
+		# 	sys.stdout.flush();
 
 		t.GetEntry(i);
 		h_HT.Fill(t.HT,t.lheWeight);
 		h_MHT.Fill(t.MHT,t.lheWeight);
 		h_sumJetMass.Fill(t.sumJetMass,t.lheWeight);
 		h_MT2.Fill(t.mT2,t.lheWeight);
+		print t.mT2, t.alphaT, t.dRazor, t.mRazor, t.sumJetMass
 
 	print '\n'
 

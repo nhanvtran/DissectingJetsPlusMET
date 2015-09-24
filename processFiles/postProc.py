@@ -8,13 +8,13 @@ import time
 
 import ROOT
 
-ROOT.gROOT.ProcessLine(".L ~/tdrstyle.C");
-ROOT.setTDRStyle();
-ROOT.gStyle.SetPadTopMargin(0.06);
-ROOT.gStyle.SetPadLeftMargin(0.16);
-ROOT.gStyle.SetPadRightMargin(0.10);
-ROOT.gStyle.SetPalette(1);
-ROOT.gStyle.SetPaintTextFormat("1.1f");
+# ROOT.gROOT.ProcessLine(".L ~/tdrstyle.C");
+# ROOT.setTDRStyle();
+# ROOT.gStyle.SetPadTopMargin(0.06);
+# ROOT.gStyle.SetPadLeftMargin(0.16);
+# ROOT.gStyle.SetPadRightMargin(0.10);
+# ROOT.gStyle.SetPalette(1);
+# ROOT.gStyle.SetPaintTextFormat("1.1f");
 
 ############################################
 #            Job steering                  #
@@ -131,12 +131,20 @@ def slimSkimAdd(fn,odir,weight,trainingSample):
 	nent = tree.GetEntriesFast();
 	for i in range(nent):
 
-		# if(i % (1 * nent/100) == 0):
-		# 	sys.stdout.write("\r[" + "="*int(20*i/nent) + " " + str(round(100.*i/nent,0)) + "% done");
-		# 	sys.stdout.flush();
+		if(i % (1 * nent/100) == 0):
+			sys.stdout.write("\r[" + "="*int(20*i/nent) + " " + str(round(100.*i/nent,0)) + "% done");
+			sys.stdout.flush();
 
 		tree.GetEntry(i);
-		if tree.HT > 0 and tree.MHT > 0:
+		# print tree.HT, tree.mT2, tree.alphaT, tree.dRazor, tree.mRazor, tree.sumJetMass
+
+		if tree.HT > 500 and tree.MHT > 200 and tree.NLeptons == 0 and tree.NJets > 1:
+			# throw out NaN values...
+			# print tree.HT, tree.mT2, tree.alphaT, tree.dRazor, tree.mRazor, tree.sumJetMass
+			curalphaT = tree.alphaT;
+			curdRazor = tree.dRazor;
+			if math.isnan(curalphaT) or math.isnan(curdRazor): continue;
+			# print tree.HT, tree.mT2, tree.alphaT, tree.dRazor, tree.mRazor, tree.sumJetMass
 			if int(tree.HT) % 2 == modval: continue;
 			# print int(tree.HT)
 			lheWeight[0] = float(weight);
@@ -152,17 +160,21 @@ def slimSkimAdd(fn,odir,weight,trainingSample):
 
 def getFilesRecursively(dir,searchstring,additionalstring = None):
 	
+	thesearchstring = "_"+searchstring+"_";
+	theadditionalstring = "_"+additionalstring+"_";
+	
+
 	cfiles = [];
 	for root, dirs, files in os.walk(dir):
 		for file in files:	
-			if searchstring in file:
-				if additionalstring == None or additionalstring in file:
+			if thesearchstring in file:
+				if theadditionalstring == None or theadditionalstring in file:
 					cfiles.append(os.path.join(root, file))
 	return cfiles;
 
 if __name__ == '__main__':
 
-	DataDir = "/uscms_data/d2/ntran/physics/SUSY/theory/DissectingJetsPlusMET/Data";
+	DataDir = "/Users/plewis/Documents/research/DissectingJetsPlusMET/localData/";
 	OutDir = 'tmp';
 
 	tags = [];
@@ -197,27 +209,28 @@ if __name__ == '__main__':
 	tags.append( ['znunu','2500_3500'] );
 	tags.append( ['znunu','3500_100000'] );
 
-	tags.append( ['GjN1_GjN1',       '_500_'] );
-	tags.append( ['GjN1_GjjN1',      '_500_'] );
-	tags.append( ['GjjN1_GjjN1',     '_500_'] );
-	tags.append( ['GjjN1_GjjjN1',    '_500_'] );
-	tags.append( ['GjjjN1_GjjjN1',   '_500_'] );
-	tags.append( ['GjjjN1_GjjjjN1',  '_500_'] );
-	tags.append( ['GjjjjN1_GjjjjN1', '_500_'] );
-	tags.append( ['GjN1_GjN1',      '_1000_'] );
-	tags.append( ['GjN1_GjjN1',     '_1000_'] );
-	tags.append( ['GjjN1_GjjN1',    '_1000_'] );
-	tags.append( ['GjjN1_GjjjN1',   '_1000_'] );
-	tags.append( ['GjjjN1_GjjjN1',  '_1000_'] );
-	tags.append( ['GjjjN1_GjjjjN1', '_1000_'] );
-	tags.append( ['GjjjjN1_GjjjjN1','_1000_'] );
-	tags.append( ['GjN1_GjN1',      '_1500_'] );
-	tags.append( ['GjN1_GjjN1',     '_1500_'] );
-	tags.append( ['GjjN1_GjjN1',    '_1500_'] );
-	tags.append( ['GjjN1_GjjjN1',   '_1500_'] );
-	tags.append( ['GjjjN1_GjjjN1',  '_1500_'] );
-	tags.append( ['GjjjN1_GjjjjN1', '_1500_'] );
-	tags.append( ['GjjjjN1_GjjjjN1','_1500_'] );
+	tags.append( ['GjN1_GjN1',       '500'] );
+	tags.append( ['GjN1_GjjN1',      '500'] );
+	tags.append( ['GjjN1_GjjN1',     '500'] );
+	tags.append( ['GjjN1_GjjjN1',    '500'] );
+	tags.append( ['GjjjN1_GjjjN1',   '500'] );
+	tags.append( ['GjjjN1_GjjjjN1',  '500'] );
+	tags.append( ['GjjjjN1_GjjjjN1', '500'] );
+	tags.append( ['GjN1_GjN1',       '1000'] );
+	tags.append( ['GjN1_GjjN1',      '1000'] );
+	tags.append( ['GjjN1_GjjN1',     '1000'] );
+	tags.append( ['GjjN1_GjjjN1',    '1000'] );
+	tags.append( ['GjjjN1_GjjjN1',   '1000'] );
+	tags.append( ['GjjjN1_GjjjjN1',  '1000'] );
+	tags.append( ['GjjjjN1_GjjjjN1', '1000'] );
+	tags.append( ['GjN1_GjN1',       '1500'] );
+	tags.append( ['GjN1_GjjN1',      '1500'] );
+	tags.append( ['GjjN1_GjjN1',     '1500'] );
+	tags.append( ['GjjN1_GjjjN1',    '1500'] );
+	tags.append( ['GjjjN1_GjjjN1',   '1500'] );
+	tags.append( ['GjjjN1_GjjjjN1',  '1500'] );
+	tags.append( ['GjjjjN1_GjjjjN1', '1500'] );
+
 	# tags.append( ['GjN1_GjN1',      '_2000_'] );
 	# tags.append( ['GjN1_GjjN1',     '_2000_'] );
 	# tags.append( ['GjjN1_GjjN1',    '_2000_'] );
@@ -235,7 +248,7 @@ if __name__ == '__main__':
 	for i in range(len(tags)):
 		
 		filesToConvert = getFilesRecursively(DataDir,tags[i][0],tags[i][1]);
-		#print filesToConvert
+		# print filesToConvert
 		curweight = getLHEWeight( filesToConvert );
 		for f in filesToConvert:
 			slimSkimAdd(f,OutDir,curweight,options.train);
